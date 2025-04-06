@@ -2,13 +2,10 @@
 #include "vcs.h"
 #include <filesystem>
 #include <fstream>
+#include "huffman.h"
+#include "sha256.h"
 
 namespace fs = std::filesystem;
-
-std::string hash_content(const std::string &content) {
-    std::hash<std::string> hasher;
-    return std::to_string(hasher(content));
-}
 
 void init_vcfs() {
     if(fs::exists(".vcfs")) {
@@ -45,18 +42,18 @@ void add_file(const std::string &filename) {
     // Read the file content
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
-    std::string hash = hash_content(content);
+    std::string hash = sha256(content);
     std::string blob_path = ".vcfs/blobs/" + hash;
     if(fs::exists(blob_path)) {
         std::cout << "File " << filename << " is alredy added" << std::endl;
         return;
     }
-    std::ofstream blob(blob_path);
+    std::ofstream blob(blob_path, std::ios::binary);
     if(!blob) {
         std::cerr << "Error: could not create blob file" << std::endl;
         return;
     }
-    blob << content;
+    blob << huffman_encode(content);
     blob.close();
     std::ofstream index(".vcfs/index", std::ios::app);
     if(!index) {
