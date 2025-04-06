@@ -3,4 +3,4 @@
 
 void init_vcfs();
 
-#endif VCS_H
+#endif
