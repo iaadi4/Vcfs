@@ -2,5 +2,6 @@
 #define VCS_H
 
 void init_vcfs();
+void add_file(const std::string &filename);
 
 #endif
