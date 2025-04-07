@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
         }
         std::string message = argv[2];
         commit_changes(message);
+    } else if (command == "log") {
+        show_log();
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
         return 1;

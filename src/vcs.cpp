@@ -6,6 +6,7 @@
 #include "sha256.h"
 #include <vector>
 #include <ctime>
+#include <map>
 
 namespace fs = std::filesystem;
 
@@ -113,4 +114,43 @@ void commit_changes(const std::string& message) {
 
     std::cout << "Committed successfully with hash: " << commit_hash << std::endl;
     return;
+}
+
+void show_log() {
+    std::string commits_dir = ".vcfs/commits";
+
+    if (!fs::exists(commits_dir)) {
+        std::cerr << "Error: No commits directory found. Is VCFS initialized?\n";
+        return;
+    }
+
+    std::map<std::string, std::string> logs;
+
+    for (const auto& entry : fs::directory_iterator(commits_dir)) {
+        std::ifstream commit_file(entry.path());
+        if (!commit_file) continue;
+
+        std::string line, message, timestamp;
+        while (std::getline(commit_file, line)) {
+            if (line.find("message: ") == 0) {
+                message = line.substr(9);
+            } else if (line.find("timestamp: ") == 0) {
+                timestamp = line.substr(11);
+            }
+        }
+
+        std::string commit_hash = entry.path().filename().string();
+        std::string log_entry = "Commit: " + commit_hash + "\nMessage: " + message + "\nTimestamp: " + timestamp + "\n";
+        logs[timestamp] = log_entry;
+    }
+
+    if (logs.empty()) {
+        std::cout << "No commits found.\n";
+        return;
+    }
+
+    std::cout << "=== Commit History ===\n";
+    for (auto it = logs.rbegin(); it != logs.rend(); ++it) {
+        std::cout << it->second << "\n";
+    }
 }
