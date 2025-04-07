@@ -4,6 +4,8 @@
 #include <fstream>
 #include "huffman.h"
 #include "sha256.h"
+#include <vector>
+#include <ctime>
 
 namespace fs = std::filesystem;
 
@@ -39,7 +41,6 @@ void add_file(const std::string &filename) {
         std::cerr << "Error: could not open file " << filename << std::endl;
         return;
     }
-    // Read the file content
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
     std::string hash = sha256(content);
@@ -63,5 +64,53 @@ void add_file(const std::string &filename) {
     index << hash << " " << filename << std::endl;
     index.close();
     std::cout << "File " << filename << " added to vcfs" << std::endl;
+    return;
+}
+
+void commit_changes(const std::string& message) {
+    std::string index_path = ".vcfs/index";
+    std::ifstream index(index_path);
+    if (!index) {
+        std::cerr << "Error: could not open index file" << std::endl;
+        return;
+    }
+
+    std::vector<std::string> entries;
+    std::string line;
+    while (std::getline(index, line)) {
+        entries.push_back(line);
+    }
+    index.close();
+
+    if (entries.empty()) {
+        std::cout << "No changes to commit." << std::endl;
+        return;
+    }
+
+    std::time_t now = std::time(nullptr);
+    std::string timestamp = std::ctime(&now);
+    timestamp.pop_back();
+
+    std::string raw = message + timestamp;
+    std::string commit_hash = sha256(raw);
+
+    std::string commit_path = ".vcfs/commits/" + commit_hash;
+    std::ofstream commit_file(commit_path);
+    if (!commit_file) {
+        std::cerr << "Error: could not create commit file" << std::endl;
+        return;
+    }
+
+    commit_file << "message: " << message << std::endl;
+    commit_file << "timestamp: " << timestamp << std::endl;
+    for (const std::string& entry : entries) {
+        commit_file << "file: " << entry << std::endl;
+    }
+    commit_file.close();
+
+    std::ofstream clear_index(index_path, std::ios::trunc);
+    clear_index.close();
+
+    std::cout << "Committed successfully with hash: " << commit_hash << std::endl;
     return;
 }
