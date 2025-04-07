@@ -15,6 +15,10 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         std::string filename = argv[2];
+        if(filename == ".") {
+            add_all();
+            return 0;
+        }
         add_file(filename);
     } else if(command == "commit") {
         if(argc < 3) {

@@ -68,6 +68,18 @@ void add_file(const std::string &filename) {
     return;
 }
 
+void add_all() {
+    if(!fs::exists(".vcfs")) {
+        std::cerr << "Error: vcfs not initialized in this directory" << std::endl;
+        return;
+    }
+    for (const auto& entry : fs::directory_iterator(".")) {
+        if (entry.is_regular_file() && entry.path().filename() != ".vcfs") {
+            add_file(entry.path().string());
+        }
+    }
+}
+
 void commit_changes(const std::string& message) {
     std::string index_path = ".vcfs/index";
     std::ifstream index(index_path);
